@@ -1,28 +1,39 @@
 #pragma once
+#include "main.h"
 #include "Core/Module/Module.h"
 #include "Core/Gyroscope.h"
 
 namespace Robot
 {
 
-    class GyroModule : public Module
+    class Gyro : public Module
     {
     public:
-        GyroModule()
-        {
-            m_Gyro = Gyroscope::Create();
-        }
-        ~GyroModule() {}
-        void OnAttach() override {}
-        void OnDetach() override {}
+        Gyro(){};
+        ~Gyro() {};
+        void OnAttach() override {
+            m_Gyro.Begin();
+        };
+        void OnDetach() override {};
+
+
+
         void OnUpdate() override
         {
-            m_Gyro->Update();
+            m_Gyro.Update();
+            Serial.print(m_Gyro.GetAngleX());
+            Serial.print("\t");
+            Serial.print(m_Gyro.GetAngleY());
+            Serial.print("\t");
+            Serial.print(m_Gyro.GetAngleZ());
+            Serial.print("\t\n");
         }
         void OnFixedUpdate() override {}
 
     private:
-        Gyroscope *m_Gyro;
+        Robot::Gyroscope m_Gyro;
     };
+
+    
 
 }

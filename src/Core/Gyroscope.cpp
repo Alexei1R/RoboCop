@@ -1,131 +1,88 @@
 #include "Gyroscope.h"
-#include "platform.h"
 
-#include <Arduino.h>
-#include <Wire.h>
 namespace Robot
 {
 
-    Gyroscope *Gyroscope::Create()
+    
+    void Gyroscope::Begin()
     {
+        writeGyroscope(MPU6050_SMPLRT_DIV, 0x00);
+        writeGyroscope(MPU6050_CONFIG, 0x00);
+        writeGyroscope(MPU6050_GYRO_CONFIG, 0x08);
+        writeGyroscope(MPU6050_ACCEL_CONFIG, 0x00);
+        writeGyroscope(MPU6050_PWR_MGMT_1, 0x01);
+        this->Update();
+        m_AngleGyroX = 0;
+        m_AngleGyroY = 0;
+        m_AngleX = this->GetAccX();
+        m_AngleY = this->GetAccY();
+        m_Time = millis();
+    };
 
-        switch (Platform::GetApi())
-        {
-        case PlatformApi::Arduino:
-            return new Abstraction::Arduino_MPU();
-        case PlatformApi::Raspberry:
-            return new Abstraction::Arduino_MPU();
-
-        default:
-            return new Abstraction::Arduino_MPU();
-        }
+    void Gyroscope::writeGyroscope(byte reg, byte data)
+    {
+        Wire.beginTransmission(MPU6050_ADDR);
+        Wire.write(reg);
+        Wire.write(data);
+        Wire.endTransmission();
     }
 
-    namespace Abstraction
+    byte Gyroscope::readGyroscope(byte reg)
     {
-
-        // arduino implementation
-
-        Arduino_MPU::Arduino_MPU()
-        {
-            Wire.beginTransmission(0b1101000); // This is the I2C address of the MPU (b1101000/b1101001 for AC0 low/high datasheet sec. 9.2)
-            Wire.write(0x6B);                  // Accessing the register 6B - Power Management (Sec. 4.28)
-            Wire.write(0b00000000);            // Setting SLEEP register to 0. (Required; see Note on p. 9)
-            Wire.endTransmission();
-            Wire.beginTransmission(0b1101000); // I2C address of the MPU
-            Wire.write(0x1B);                  // Accessing the register 1B - Gyroscope Configuration (Sec. 4.4)
-            Wire.write(0x00000000);            // Setting the gyro to full scale +/- 250deg./s
-            Wire.endTransmission();
-            Wire.beginTransmission(0b1101000); // I2C address of the MPU
-            Wire.write(0x1C);                  // Accessing the register 1C - Acccelerometer Configuration (Sec. 4.5)
-            Wire.write(0b00000000);            // Setting the accel to +/- 2g
-            Wire.endTransmission();
-        };
-        Arduino_MPU::~Arduino_MPU(){};
-
-        void Arduino_MPU::Update()
-        {
-            // Accelerometer Data
-            float m_accelX, m_accelY, m_accelZ;
-            // gyro data
-            float m_gyroX, m_gyroY, m_gyroZ;
-
-            //=========================
-            //=read accelerometer data
-            //=========================
-            Wire.beginTransmission(0b1101000); // I2C address of the MPU
-            Wire.write(0x3B);                  // Starting register for Accel Readings
-            Wire.endTransmission();
-            Wire.requestFrom(0b1101000, 6); // Request Accel Registers (3B - 40)
-            while (Wire.available() < 6)
-                ;
-            m_accelX = Wire.read() << 8 | Wire.read(); // Store first two bytes into accelX
-            m_accelY = Wire.read() << 8 | Wire.read(); // Store middle two bytes into accelY
-            m_accelZ = Wire.read() << 8 | Wire.read(); // Store last two bytes into accelZ
-            // convert data to force
-            m_ForceX = m_accelX / 16384.0;
-            m_ForceY = m_accelY / 16384.0;
-            m_ForceZ = m_accelZ / 16384.0;
-
-            //=========================
-            //=read gyro  data ========
-            //=========================
-
-            Wire.beginTransmission(0b1101000); // I2C address of the MPU
-            Wire.write(0x43);                  // Starting register for Gyro Readings
-            Wire.endTransmission();
-            Wire.requestFrom(0b1101000, 6); // Request Gyro Registers (43 - 48)
-            while (Wire.available() < 6);
-            m_gyroX = Wire.read() << 8 | Wire.read(); // Store first two bytes into accelX
-            m_gyroY = Wire.read() << 8 | Wire.read(); // Store middle two bytes into accelY
-            m_gyroZ = Wire.read() << 8 | Wire.read(); // Store last two bytes into accelZ
-            // convert data to angle
-            m_RotationX = m_gyroX / 131.0;
-            m_RotationY = m_gyroY / 131.0;
-            m_RotationZ = m_gyroZ / 131.0;
-        }
-
-        float Arduino_MPU::GetForceX() {return m_ForceX;};
-        float Arduino_MPU::GetForceY() {return m_ForceY;};
-        float Arduino_MPU::GetForceZ() {return m_ForceZ;};
-
-        float Arduino_MPU::GetRotationX() {return m_RotationX;};
-        float Arduino_MPU::GetRotationY() {return m_RotationY;};
-        float Arduino_MPU::GetRotationZ() {return m_RotationZ;};
-
-        float Arduino_MPU::GetYAW() { return 0.0; }
-        float Arduino_MPU::GetPITCH() { return 0.0; }
-        float Arduino_MPU::GetROLL() { return 0.0; }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        // Raspberry implementation
-        Raspberry_MPU::Raspberry_MPU(){};
-        Raspberry_MPU::~Raspberry_MPU(){};
-        float Raspberry_MPU::GetYAW() { return 0.0; }
-        float Raspberry_MPU::GetPITCH() { return 0.0; }
-        float Raspberry_MPU::GetROLL() { return 0.0; }
+        Wire.beginTransmission(MPU6050_ADDR);
+        Wire.write(reg);
+        Wire.endTransmission(true);
+        Wire.requestFrom(MPU6050_ADDR, 1);
+        byte data = Wire.read();
+        return data;
     }
+
+
+    void Gyroscope::Update(){
+
+Wire.beginTransmission(MPU6050_ADDR);
+        Wire.write(0x3B);
+        Wire.endTransmission(false);
+        Wire.requestFrom((int)MPU6050_ADDR, 14);
+
+        m_RawAccX = Wire.read() << 8 | Wire.read();
+        m_RawAccY = Wire.read() << 8 | Wire.read();
+        m_RawAccZ = Wire.read() << 8 | Wire.read();
+        m_RawTemperature = Wire.read() << 8 | Wire.read();
+        m_RawGyroX = Wire.read() << 8 | Wire.read();
+        m_RawGyroY = Wire.read() << 8 | Wire.read();
+        m_RawGyroZ = Wire.read() << 8 | Wire.read();
+
+        m_Temperature = (m_RawTemperature + 12412.0) / 340.0;
+
+        float accX = ((float)m_RawAccX) / 16384.0;
+        float accY = ((float)m_RawAccY) / 16384.0;
+        float accZ = ((float)m_RawAccZ) / 16384.0;
+
+        m_AngleAccX = atan2(accY, sqrt(accZ * accZ + accX * accX)) * 180 / PI;
+        m_AngleAccY = atan2(accX, sqrt(accZ * accZ + accY * accY)) * 180 / PI;
+
+        float gyroX = ((float)m_RawGyroX) / 65.5;
+        float gyroY = ((float)m_RawGyroY) / 65.5;
+        float gyroZ = ((float)m_RawGyroZ) / 65.5;
+
+        //gyroX -= gyroXoffset;
+        //gyroY -= gyroYoffset;
+        //gyroZ -= gyroZoffset;
+
+        m_DeltaTime = (millis() - m_Time) * 0.001;
+
+        m_AngleGyroX += gyroX * m_DeltaTime;
+        m_AngleGyroY += gyroY * m_DeltaTime;
+        m_AngleGyroZ += gyroZ * m_DeltaTime;
+
+        m_AngleX = (GyroCoef * (m_AngleX + gyroX * m_DeltaTime)) + (AccCoef * m_AngleAccX);
+        m_AngleY = (GyroCoef * (m_AngleY + gyroY * m_DeltaTime)) + (AccCoef * m_AngleAccY);
+        m_AngleZ = m_AngleGyroZ* m_DeltaTime;
+
+        m_Time = millis();
+
+
+    };
+
 }
