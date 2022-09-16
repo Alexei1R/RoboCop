@@ -20,6 +20,8 @@ namespace Robot
     public:
         void Update();
         void Begin();
+        
+        void SetCoeficient(int coef){GyroCoef = coef;}
 
         float GetAccX() { return m_AngleAccX; };
         float GetAccY() { return m_AngleAccY; };
@@ -58,7 +60,7 @@ namespace Robot
         float m_Time;
         float m_DeltaTime;
 
-        float GyroCoef  = 0.5;
+        float GyroCoef  = 0.9;
         float AccCoef  = 1.0 - GyroCoef;
     };
 }

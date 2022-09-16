@@ -22,11 +22,10 @@ namespace Robot
         {
             m_Gyro.Update();
             Serial.print(m_Gyro.GetAngleX());
-            Serial.print("\t");
+            Serial.print(",");
             Serial.print(m_Gyro.GetAngleY());
-            Serial.print("\t");
-            Serial.print(m_Gyro.GetAngleZ());
-            Serial.print("\t\n");
+            Serial.print(",");
+            Serial.println();
         }
         void OnFixedUpdate() override {}
 

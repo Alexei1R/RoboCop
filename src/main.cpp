@@ -13,16 +13,13 @@ void setup()
   Wire.setClock(400000);
   Wire.begin();
   PushModule(new Robot::Gyro());
-  
 }
 
 void loop()
 {
 
 
-//Serial.print(" : ");
-//
-//Serial.println(m_gyro.GetYAW());
+
 for (auto module : m_ModuleStack){
   module->OnUpdate();
   module->OnFixedUpdate();

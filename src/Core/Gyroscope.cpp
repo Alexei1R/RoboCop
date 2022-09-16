@@ -65,7 +65,9 @@ Wire.beginTransmission(MPU6050_ADDR);
         float gyroX = ((float)m_RawGyroX) / 65.5;
         float gyroY = ((float)m_RawGyroY) / 65.5;
         float gyroZ = ((float)m_RawGyroZ) / 65.5;
-
+        
+        
+        //TODO
         //gyroX -= gyroXoffset;
         //gyroY -= gyroYoffset;
         //gyroZ -= gyroZoffset;
